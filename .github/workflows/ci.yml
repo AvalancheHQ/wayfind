@@ -20,36 +20,8 @@ env:
   SCCACHE_GHA_VERSION: "1"
 
 jobs:
-  checks:
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        shell: nix develop .#ci --command bash {0}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          shell: ci
-
-      - name: Run checks
-        run: |
-          set -eufo pipefail
-          cargo fmt --all --check
-          cargo clippy --workspace
-          cargo check --workspace
-          cargo build --workspace
-          cargo test --workspace
-          cargo test --workspace --doc
-
   benchmarks:
     runs-on: ubuntu-24.04
-    env:
-      RUSTFLAGS: "-C target-cpu=native"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,68 +42,5 @@ jobs:
         uses: CodSpeedHQ/action@v3
         with:
           run: cargo codspeed run
-          token: "${{ secrets.CODSPEED_TOKEN }}"
-
-  coverage:
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        shell: nix develop .#nightly --command bash {0}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          shell: nightly
-
-      - name: Generate coverage
-        run: cargo llvm-cov --workspace --doctests --codecov --output-path codecov.json
-
-      - name: Upload coverage results to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: codecov.json
-          fail_ci_if_error: true
-          token: "${{ secrets.CODECOV_TOKEN }}"
-
-  msrv:
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        shell: nix develop .#msrv --command bash {0}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          shell: msrv
-
-      - name: Build wayfind
-        run: cargo build --package wayfind
-
-  wasm:
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        shell: nix develop .#msrv --command bash {0}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Setup environment
-        uses: ./.github/actions/setup
-        with:
-          shell: msrv
-
-      - name: Build wayfind
-        run: cargo build --package wayfind --target wasm32-unknown-unknown
+          token: "${{ secrets.STAGING_CODSPEED_TOKEN }}"
+          upload-url: https://api.staging.preview.codspeed.io/upload
